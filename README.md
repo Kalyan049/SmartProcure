@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # SmartProcure (SIH26032)
 
 > “Right Information. Less Waiting. Brighter Tomorrows.”  
@@ -100,3 +101,6 @@ npm run dev
 - **Mint Accent**: `#D3EDDD`
 - **Page Canvas**: `#F5FAF7`
 - **Typography**: Inter Sans-Serif
+=======
+# SmartProcure
+>>>>>>> 3d8026ffc2b82a4028c21d6b24a5dcf51e420614
