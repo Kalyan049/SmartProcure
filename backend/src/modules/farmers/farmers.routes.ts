@@ -1,46 +1,19 @@
-import { Router, Request, Response } from 'express';
-import { ApiResponseHandler } from '../../utils/apiResponse';
+/**
+ * SmartProcure Farmers Routes — Module 6: Farmer Profile
+ */
 
-export class FarmersService {
-  async getProfile(userId: string) {
-    return {
-      id: 'prof-01',
-      user_id: userId,
-      farmer_id_code: 'SP-FARMER-1082',
-      is_aadhaar_verified: true,
-      aadhaar_masked: 'XXXXXXXX3421',
-      land_size_acres: 4.5,
-      land_village: 'Rampur',
-      land_district: 'Varanasi',
-      land_state: 'Uttar Pradesh',
-      bank_account_number_masked: 'XXXXXX5892',
-      bank_ifsc: 'SBIN0001234',
-      bank_name: 'State Bank of India',
-      crops_grown: ['Paddy', 'Wheat'],
-      created_at: new Date().toISOString(),
-    };
-  }
-
-  async updateProfile(userId: string, data: Record<string, unknown>) {
-    return {
-      user_id: userId,
-      ...data,
-      updated_at: new Date().toISOString(),
-    };
-  }
-}
-
-const farmersService = new FarmersService();
+import { Router } from 'express';
+import { FarmersController } from './farmers.controller';
 
 const router = Router();
-router.get('/me', async (req: Request, res: Response) => {
-  const profile = await farmersService.getProfile('usr-farmer-01');
-  return ApiResponseHandler.success(res, profile);
-});
 
-router.put('/me', async (req: Request, res: Response) => {
-  const updated = await farmersService.updateProfile('usr-farmer-01', req.body);
-  return ApiResponseHandler.success(res, updated, 'Profile updated successfully');
-});
+// These routes assume `authenticate` middleware is applied globally before them in routes.ts
+router.get('/me', FarmersController.getProfile);
+router.put('/me', FarmersController.updateProfile);
+
+// History endpoints
+router.get('/me/history/bookings', FarmersController.getBookingHistory);
+router.get('/me/history/procurement', FarmersController.getProcurementHistory);
+router.get('/me/history/payments', FarmersController.getPaymentHistory);
 
 export default router;

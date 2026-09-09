@@ -11,6 +11,10 @@ export const API_ENDPOINTS = {
   },
   FARMERS: {
     PROFILE: `${ENV.API_URL}/farmers/me`,
+    UPDATE_PROFILE: `${ENV.API_URL}/farmers/me`,
+    HISTORY_BOOKINGS: `${ENV.API_URL}/farmers/me/history/bookings`,
+    HISTORY_PROCUREMENT: `${ENV.API_URL}/farmers/me/history/procurement`,
+    HISTORY_PAYMENTS: `${ENV.API_URL}/farmers/me/history/payments`,
   },
   CENTERS: {
     LIST: `${ENV.API_URL}/centers`,
