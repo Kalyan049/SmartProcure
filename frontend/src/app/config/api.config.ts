@@ -37,6 +37,7 @@ export const API_ENDPOINTS = {
     MY: `${ENV.API_URL}/queue/my`,
     SHOULD_I_GO: `${ENV.API_URL}/queue/should-i-go-now`,
     BY_CENTER: (centerId: string) => `${ENV.API_URL}/queue/center/${centerId}`,
+    ADVANCE: `${ENV.API_URL}/queue/advance`,
   },
   PROCUREMENT: {
     MY: `${ENV.API_URL}/procurement/my`,
