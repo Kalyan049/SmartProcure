@@ -94,30 +94,110 @@ export async function advanceCenterQueue(centerId: string): Promise<{ processed:
   return { processed: first, remaining: remaining.length };
 }
 
-export async function getShouldIGoNow(farmerToken: string): Promise<ShouldIGoNowResult | null> {
-  const current = await getMyQueueStatus(farmerToken);
-  if (!current) return null;
+export async function getShouldIGoNow(farmerToken: string): Promise<ShouldIGoNowResult> {
+  const currentQueue = await getMyQueueStatus(farmerToken);
 
-  const eta = current.estimated_wait_minutes;
+  // Default fallback center info (MVP)
+  const center_name = 'Rohania Agribusiness Center B';
+  const center_location = { lat: 25.2677, lng: 82.9234 };
+
+  // Rule 1: No Booking
+  if (!currentQueue || currentQueue.status === 'COMPLETED' || currentQueue.status === 'CANCELLED') {
+    return {
+      decision: 'DO NOT GO', // Maps to BOOK A SLOT visually on frontend or similar
+      reason: 'You do not have an active booking or queue token. Please book a slot first.',
+      token_number: farmerToken,
+      current_position: 0,
+      farmers_ahead: 0,
+      estimated_wait_minutes: 0,
+      center_load_percent: 0,
+      recommended_departure_time: '—',
+      estimated_arrival_time: '—',
+      center_name,
+      center_location,
+      last_updated: new Date().toISOString(),
+    };
+  }
+
+  // Get mocked center data for the rules
+  const isCenterClosed = false; // Mock
+  const centerLoadPercent = currentQueue.center_id === 'ctr-02' ? 45 : 95; // Mock
+
+  // Rule 2: Center Closed
+  if (isCenterClosed) {
+    return {
+      decision: 'DO NOT GO',
+      reason: 'The procurement center is currently closed. Do not proceed.',
+      token_number: currentQueue.token_number,
+      current_position: currentQueue.position,
+      farmers_ahead: currentQueue.farmers_ahead,
+      estimated_wait_minutes: currentQueue.estimated_wait_minutes,
+      center_load_percent: centerLoadPercent,
+      recommended_departure_time: '—',
+      estimated_arrival_time: '—',
+      center_name,
+      center_location,
+      last_updated: currentQueue.updated_at,
+    };
+  }
+
+  // Rule 3: Critical Queue
+  if (centerLoadPercent >= 95) {
+    return {
+      decision: 'WAIT',
+      reason: 'Center is experiencing critical load and delays. Please delay your departure.',
+      token_number: currentQueue.token_number,
+      current_position: currentQueue.position,
+      farmers_ahead: currentQueue.farmers_ahead,
+      estimated_wait_minutes: currentQueue.estimated_wait_minutes,
+      center_load_percent: centerLoadPercent,
+      recommended_departure_time: 'Check back later',
+      estimated_arrival_time: '—',
+      center_name,
+      center_location,
+      last_updated: currentQueue.updated_at,
+    };
+  }
+
+  // Real-time calculation logic
+  const eta = currentQueue.estimated_wait_minutes;
+  let decision: 'GO NOW' | 'PREPARE TO GO' | 'WAIT' | 'DO NOT GO' = 'WAIT';
+  let reason = '';
+
+  // Rule 4, 5, 6: ETA Based
+  if (eta <= 30) {
+    decision = 'GO NOW';
+    reason = 'The queue is moving quickly. Estimated arrival aligns with your slot.';
+  } else if (eta <= 60) {
+    decision = 'PREPARE TO GO';
+    reason = 'Your turn is approaching in under an hour. Prepare your vehicle and produce.';
+  } else {
+    decision = 'WAIT';
+    reason = 'Queue is currently moderate. Please check back later.';
+  }
+
+  // Calculate mock times based on ETA
+  const now = new Date();
+  const travelTimeMins = 15; // mock 15 mins travel
+  const recommendedMins = Math.max(0, eta - travelTimeMins);
   
-  const result: ShouldIGoNowResult = {
-    decision: eta <= 30 ? 'GO NOW' : eta <= 60 ? 'PREPARE TO GO' : 'WAIT',
-    reason: eta <= 30
-      ? 'The queue is moving quickly. Estimated arrival aligns with your slot.'
-      : eta <= 60
-      ? 'Your turn is approaching in under an hour. Prepare your vehicle and produce.'
-      : 'Queue is currently moderate. Please check back in 20 minutes.',
-    token_number: current.token_number,
-    current_position: current.position,
-    farmers_ahead: current.farmers_ahead,
-    estimated_wait_minutes: current.estimated_wait_minutes,
-    center_load_percent: 45,
-    recommended_departure_time: '10:15 AM', // static mock
-    estimated_arrival_time: '10:35 AM',     // static mock
-    center_name: 'Rohania Agribusiness Center B',
-    center_location: { lat: 25.2677, lng: 82.9234 },
-    last_updated: current.updated_at,
-  };
+  const departureTime = new Date(now.getTime() + recommendedMins * 60000);
+  const arrivalTime = new Date(departureTime.getTime() + travelTimeMins * 60000);
 
-  return result;
+  const timeString = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  return {
+    decision,
+    reason,
+    token_number: currentQueue.token_number,
+    current_position: currentQueue.position,
+    farmers_ahead: currentQueue.farmers_ahead,
+    estimated_wait_minutes: currentQueue.estimated_wait_minutes,
+    center_load_percent: centerLoadPercent,
+    recommended_departure_time: timeString(departureTime),
+    estimated_arrival_time: timeString(arrivalTime),
+    center_name,
+    center_location,
+    last_updated: currentQueue.updated_at,
+  };
 }
