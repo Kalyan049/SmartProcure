@@ -127,3 +127,66 @@ export const requireRole = (allowedRoles: UserRole[]) => {
     next();
   };
 };
+
+/**
+ * Optional authentication: attaches user info when a valid token is present,
+ * but allows the request through even when unauthenticated.
+ * Used for public-but-personalizable endpoints (e.g., center discovery, recommendation).
+ */
+export const authenticateOptional = async (
+  req: AuthenticatedRequest,
+  _res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      // Fallback demo user in dev so distances/recommendations are deterministic
+      if (process.env.NODE_ENV !== 'production' && !isDatabaseConfigured()) {
+        req.user = {
+          id: 'usr-farmer-demo-01',
+          role: 'FARMER',
+          mobile: '9876543210',
+          name: 'Ramesh Kumar',
+        };
+      }
+      return next();
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    if (isDatabaseConfigured() && supabase) {
+      const { data, error } = await supabase.auth.getUser(token);
+      if (!error && data.user) {
+        const { data: appUser } = await supabase
+          .from('users')
+          .select('id, name, mobile, role')
+          .eq('id', data.user.id)
+          .single();
+        if (appUser) {
+          req.user = {
+            id: appUser.id,
+            role: appUser.role as UserRole,
+            mobile: appUser.mobile,
+            name: appUser.name,
+          };
+        }
+      }
+    } else if (token.startsWith('mock-jwt-')) {
+      const parts = token.split('-');
+      const userId = parts.slice(2, -1).join('-') || 'mock-user-01';
+      const mockRole = (req.headers['x-mock-role'] as UserRole) || 'FARMER';
+      req.user = {
+        id: userId,
+        role: mockRole,
+        mobile: '9876543210',
+        name: mockRole === 'OFFICER' ? 'Procurement Officer' : 'Mock Farmer',
+      };
+    }
+  } catch {
+    // Silently ignore — optional auth never blocks the request
+  }
+  next();
+};
+
