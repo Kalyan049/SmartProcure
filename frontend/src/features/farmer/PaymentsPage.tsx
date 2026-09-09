@@ -1,12 +1,26 @@
 import React from 'react';
-import { PageContainer } from '@/components/layout/PageContainer';
-import { StatCard } from '@/components/cards/StatCard';
-import { Card } from '@/components/cards/Card';
-import { StatusBadge } from '@/components/status/StatusBadge';
-import { Wallet, CheckCircle2, Clock, Download } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { PageContainer, StatCard, Card, StatusBadge, Button } from '@/components';
+import { Wallet, CheckCircle2, Clock, Download, Loader2 } from 'lucide-react';
+import { usePayments } from './hooks/usePayments';
 
 export const PaymentsPage: React.FC = () => {
+  const { payments, loading } = usePayments();
+
+  if (loading && payments.length === 0) {
+    return (
+      <PageContainer title="Payment & DBT Tracking">
+        <div className="flex flex-col items-center justify-center py-20 text-text-secondary">
+          <Loader2 className="w-8 h-8 animate-spin mb-4 text-brand-primary" />
+          <p>Loading payment ledger...</p>
+        </div>
+      </PageContainer>
+    );
+  }
+
+  const totalProcuredQtl = payments.reduce((acc, p) => acc + p.quantity_quintals, 0);
+  const amountCredited = payments.filter(p => p.status === 'CREDITED').reduce((acc, p) => acc + p.net_amount, 0);
+  const amountProcessing = payments.filter(p => p.status === 'PROCESSING').reduce((acc, p) => acc + p.net_amount, 0);
+
   return (
     <PageContainer
       title="Payment & DBT Tracking"
@@ -16,22 +30,22 @@ export const PaymentsPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <StatCard
           title="Total Procured This Season"
-          value="78.4 Qtl"
-          subtitle="2 Procurements completed"
+          value={`${totalProcuredQtl.toLocaleString()} Qtl`}
+          subtitle={`${payments.length} Procurements completed`}
           icon={<Wallet className="w-5 h-5" />}
           iconColor="green"
         />
         <StatCard
           title="Amount Credited via DBT"
-          value="₹1,79,200"
-          subtitle="Credited to SBI A/C ending 5892"
+          value={`₹${amountCredited.toLocaleString()}`}
+          subtitle="Credited to registered A/C"
           icon={<CheckCircle2 className="w-5 h-5" />}
           iconColor="green"
         />
         <StatCard
           title="Amount in Processing"
-          value="₹0.00"
-          subtitle="All transactions settled"
+          value={`₹${amountProcessing.toLocaleString()}`}
+          subtitle={amountProcessing > 0 ? "Bank settlement pending" : "All transactions settled"}
           icon={<Clock className="w-5 h-5" />}
           iconColor="blue"
         />
@@ -41,7 +55,7 @@ export const PaymentsPage: React.FC = () => {
       <Card className="p-6">
         <div className="flex items-center justify-between pb-4 border-b border-surface-border mb-4">
           <h2 className="text-base font-bold text-text-primary">Payment History & Receipts</h2>
-          <span className="text-xs text-text-secondary">Direct Bank Transfer (DBT)</span>
+          <span className="text-xs font-bold text-brand-primary bg-brand-tint px-2 py-1 rounded">SIMULATED DBT DEMO</span>
         </div>
 
         <div className="overflow-x-auto">
@@ -58,25 +72,41 @@ export const PaymentsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-border">
-              <tr className="hover:bg-surface-page transition-colors">
-                <td className="py-3.5 px-4 font-mono font-bold text-text-primary">
-                  DBT-GOV-2026-99214
-                </td>
-                <td className="py-3.5 px-4 text-text-secondary">08 Sep 2026</td>
-                <td className="py-3.5 px-4 font-medium text-text-primary">
-                  Paddy Grade A • 39.2 Qtl
-                </td>
-                <td className="py-3.5 px-4 text-text-secondary">₹90,160</td>
-                <td className="py-3.5 px-4 font-bold text-brand-dark">₹89,600</td>
-                <td className="py-3.5 px-4">
-                  <StatusBadge status="CREDITED" />
-                </td>
-                <td className="py-3.5 px-4 text-right">
-                  <Button size="sm" variant="outline" leftIcon={<Download className="w-3.5 h-3.5" />}>
-                    PDF
-                  </Button>
-                </td>
-              </tr>
+              {payments.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-text-secondary">
+                    No payment history found. Complete a procurement workflow to see payments.
+                  </td>
+                </tr>
+              ) : (
+                payments.map((p) => (
+                  <tr key={p.id} className="hover:bg-surface-page transition-colors">
+                    <td className="py-3.5 px-4 font-mono font-bold text-text-primary text-xs">
+                      {p.transaction_ref}
+                    </td>
+                    <td className="py-3.5 px-4 text-text-secondary text-xs">
+                      {new Date(p.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="py-3.5 px-4 font-medium text-text-primary text-xs">
+                      {p.crop} {p.grade} • {p.quantity_quintals} Qtl
+                    </td>
+                    <td className="py-3.5 px-4 text-text-secondary text-xs">₹{p.gross_amount.toLocaleString()}</td>
+                    <td className="py-3.5 px-4 font-bold text-brand-dark text-xs">₹{p.net_amount.toLocaleString()}</td>
+                    <td className="py-3.5 px-4">
+                      <StatusBadge status={p.status} />
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      {p.status === 'CREDITED' ? (
+                        <Button size="sm" variant="outline" leftIcon={<Download className="w-3.5 h-3.5" />}>
+                          PDF
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-text-secondary">Pending</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

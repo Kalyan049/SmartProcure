@@ -123,6 +123,23 @@ export async function advanceStage(
   };
   mockEvents.push(event);
 
+  // Notify Farmer of Stage Transition
+  const { notificationService } = await import('../notifications/notifications.service');
+  if (nextStage !== 'PAYMENT') { // Payment notifies on its own
+    await notificationService.dispatch(
+      proc.farmer_id,
+      `Procurement Update: ${nextStage}`,
+      notes,
+      nextStage === 'COMPLETED' ? 'SUCCESS' : 'INFO'
+    );
+  }
+
+  // Generate Payment if COMPLETED
+  if (nextStage === 'COMPLETED') {
+    const { generatePaymentForProcurement } = await import('../payments/payments.service');
+    await generatePaymentForProcurement(proc);
+  }
+
   return proc;
 }
 

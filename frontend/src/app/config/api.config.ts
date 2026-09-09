@@ -49,7 +49,7 @@ export const API_ENDPOINTS = {
     DETAIL: (id: string) => `${ENV.API_URL}/payments/${id}`,
   },
   NOTIFICATIONS: {
-    LIST: `${ENV.API_URL}/notifications`,
+    MY: `${ENV.API_URL}/notifications/my`,
     MARK_READ: (id: string) => `${ENV.API_URL}/notifications/${id}/read`,
   },
   VOICE: {
