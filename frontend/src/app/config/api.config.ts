@@ -42,6 +42,7 @@ export const API_ENDPOINTS = {
   PROCUREMENT: {
     MY: `${ENV.API_URL}/procurement/my`,
     DETAIL: (id: string) => `${ENV.API_URL}/procurement/${id}`,
+    ADVANCE: (id: string) => `${ENV.API_URL}/procurement/${id}/advance`,
   },
   PAYMENTS: {
     MY: `${ENV.API_URL}/payments/my`,

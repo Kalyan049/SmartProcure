@@ -1,20 +1,46 @@
 import React from 'react';
-import { PageContainer } from '@/components/layout/PageContainer';
-import { Card } from '@/components/cards/Card';
-import { CheckCircle2, Circle, Clock, Check } from 'lucide-react';
+import { PageContainer, Card } from '@/components';
+import { CheckCircle2, Clock, Check, Loader2, AlertTriangle } from 'lucide-react';
 import { clsx } from 'clsx';
-import { ProcurementStage } from '@shared/types';
+import { useProcurementRealtime } from './hooks/useProcurementRealtime';
+
+const ALL_STAGES = [
+  { id: 'BOOKED', label: '1. Slot Booked' },
+  { id: 'ARRIVED', label: '2. Center Check-in' },
+  { id: 'INSPECTION', label: '3. Physical Inspection' },
+  { id: 'GRADING', label: '4. Quality Grading' },
+  { id: 'WEIGHING', label: '5. Electronic Weighbridge' },
+  { id: 'VERIFICATION', label: '6. Officer Final Sign-Off' },
+  { id: 'COMPLETED', label: '7. Procurement Complete' },
+];
 
 export const ProcurementTrackingPage: React.FC = () => {
-  const stages: { stage: ProcurementStage; label: string; status: 'completed' | 'current' | 'upcoming'; note: string }[] = [
-    { stage: 'BOOKED', label: '1. Slot Booked', status: 'completed', note: 'Token SP-1047 confirmed for 40 Qtl' },
-    { stage: 'ARRIVED', label: '2. Center Check-in', status: 'completed', note: 'Checked in at Gate 2, Token scanned' },
-    { stage: 'INSPECTION', label: '3. Physical Inspection', status: 'completed', note: 'Passed - Clean grain, moisture 13.5%' },
-    { stage: 'GRADING', label: '4. Quality Grading', status: 'completed', note: 'Certified Grade A' },
-    { stage: 'WEIGHING', label: '5. Electronic Weighbridge', status: 'current', note: 'Gross Weight recorded: 39.2 Qtl accepted' },
-    { stage: 'VERIFICATION', label: '6. Officer Final Sign-Off', status: 'upcoming', note: 'Pending digital verification signature' },
-    { stage: 'COMPLETED', label: '7. Procurement Complete', status: 'upcoming', note: 'MSP DBT payment generation' },
-  ];
+  const { data, loading, error } = useProcurementRealtime('my');
+
+  if (loading) {
+    return (
+      <PageContainer title="Produce Procurement Tracking">
+        <div className="flex flex-col items-center justify-center py-20 text-text-secondary">
+          <Loader2 className="w-8 h-8 animate-spin mb-4 text-brand-primary" />
+          <p>Syncing tracking timeline...</p>
+        </div>
+      </PageContainer>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <PageContainer title="Produce Procurement Tracking">
+        <div className="p-4 bg-red-50 text-red-600 rounded flex items-center gap-2 max-w-lg mx-auto">
+          <AlertTriangle className="w-5 h-5" />
+          {error || 'No active procurement found.'}
+        </div>
+      </PageContainer>
+    );
+  }
+
+  const { procurement, events } = data;
+  const currentStageIndex = ALL_STAGES.findIndex(s => s.id === procurement.status);
 
   return (
     <PageContainer
@@ -25,32 +51,37 @@ export const ProcurementTrackingPage: React.FC = () => {
         <div className="lg:col-span-8 space-y-6">
           <Card className="p-6">
             <h2 className="text-lg font-bold text-text-primary mb-6 pb-2 border-b border-surface-border">
-              Live Stage Timeline (Token SP-1047)
+              Live Stage Timeline (Token {procurement.booking_id})
             </h2>
 
             <div className="relative pl-6 space-y-8 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-surface-border">
-              {stages.map((item, index) => {
-                const isCompleted = item.status === 'completed';
-                const isCurrent = item.status === 'current';
+              {ALL_STAGES.map((item, index) => {
+                const isCompleted = index <= currentStageIndex && procurement.status !== item.id;
+                const isCurrent = index === currentStageIndex;
+                const event = events.find(e => e.stage === item.id);
 
                 return (
-                  <div key={index} className="relative flex items-start gap-4">
+                  <div key={item.id} className="relative flex items-start gap-4">
                     {/* Step Icon Indicator */}
                     <div
                       className={clsx(
                         'absolute -left-6 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ring-4 ring-white shrink-0',
-                        isCompleted
+                        isCompleted || item.id === 'COMPLETED' && procurement.status === 'PAYMENT'
                           ? 'bg-brand-primary text-white'
                           : isCurrent
                           ? 'bg-amber-500 text-white animate-pulse'
                           : 'bg-gray-100 text-gray-400 border border-surface-border'
                       )}
                     >
-                      {isCompleted ? <Check className="w-3.5 h-3.5" /> : index + 1}
+                      {isCompleted || (item.id === 'COMPLETED' && procurement.status === 'PAYMENT') ? <Check className="w-3.5 h-3.5" /> : index + 1}
                     </div>
 
                     {/* Step Content */}
-                    <div className="flex-1 ml-4 p-4 rounded-sm bg-surface-page border border-surface-border">
+                    <div className={clsx(
+                      "flex-1 ml-4 p-4 rounded-sm border",
+                      isCurrent ? "bg-surface-page border-amber-300" : "bg-surface-page border-surface-border",
+                      !isCompleted && !isCurrent && "opacity-50"
+                    )}>
                       <div className="flex items-center justify-between">
                         <h3 className={clsx('text-sm font-bold', isCurrent ? 'text-amber-700 font-extrabold' : 'text-text-primary')}>
                           {item.label}
@@ -66,7 +97,17 @@ export const ProcurementTrackingPage: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-text-secondary mt-1">{item.note}</p>
+                      
+                      <p className="text-xs text-text-secondary mt-1">
+                        {event ? event.notes : (isCurrent ? 'Pending officer action...' : 'Awaiting previous stage completion')}
+                      </p>
+                      
+                      {event && (
+                        <p className="text-[10px] text-gray-400 mt-2 flex items-center justify-between">
+                          <span>By: {event.actor_name}</span>
+                          <span>{new Date(event.created_at).toLocaleTimeString()}</span>
+                        </p>
+                      )}
                     </div>
                   </div>
                 );
@@ -83,24 +124,34 @@ export const ProcurementTrackingPage: React.FC = () => {
             <div className="space-y-3 text-xs">
               <div className="flex justify-between py-1 border-b border-surface-border">
                 <span className="text-text-secondary">Crop:</span>
-                <span className="font-bold text-text-primary">Paddy (Grade A)</span>
+                <span className="font-bold text-text-primary">{procurement.crop} {procurement.grade ? `(${procurement.grade})` : ''}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-surface-border">
                 <span className="text-text-secondary">Declared Quantity:</span>
-                <span className="font-bold text-text-primary">40.0 Quintals</span>
+                <span className="font-bold text-text-primary">{procurement.estimated_quantity_quintals} Quintals</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-surface-border">
-                <span className="text-text-secondary">Accepted Quantity:</span>
-                <span className="font-bold text-brand-primary">39.2 Quintals</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-surface-border">
-                <span className="text-text-secondary">MSP Rate:</span>
-                <span className="font-bold text-text-primary">₹2,300 / Quintal</span>
-              </div>
-              <div className="flex justify-between py-1">
-                <span className="text-text-secondary">Estimated Net Value:</span>
-                <span className="font-bold text-brand-dark text-sm">₹89,600</span>
-              </div>
+              {procurement.accepted_quantity_quintals && (
+                <div className="flex justify-between py-1 border-b border-surface-border">
+                  <span className="text-text-secondary">Accepted Quantity:</span>
+                  <span className="font-bold text-brand-primary">{procurement.accepted_quantity_quintals} Quintals</span>
+                </div>
+              )}
+              {procurement.grade && (
+                <div className="flex justify-between py-1 border-b border-surface-border">
+                  <span className="text-text-secondary">MSP Rate:</span>
+                  <span className="font-bold text-text-primary">
+                    {procurement.grade === 'GRADE_A' ? '₹2,300' : '₹2,200'} / Quintal
+                  </span>
+                </div>
+              )}
+              {procurement.accepted_quantity_quintals && procurement.grade && (
+                <div className="flex justify-between py-1 mt-2">
+                  <span className="text-text-secondary">Estimated Net Value:</span>
+                  <span className="font-bold text-brand-dark text-sm">
+                    ₹{((procurement.grade === 'GRADE_A' ? 2300 : 2200) * procurement.accepted_quantity_quintals).toLocaleString()}
+                  </span>
+                </div>
+              )}
             </div>
           </Card>
         </div>
