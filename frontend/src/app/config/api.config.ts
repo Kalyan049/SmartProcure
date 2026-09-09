@@ -28,6 +28,7 @@ export const API_ENDPOINTS = {
     MY: `${ENV.API_URL}/bookings/my`,
     CREATE: `${ENV.API_URL}/bookings`,
     DETAIL: (id: string) => `${ENV.API_URL}/bookings/${id}`,
+    SLOTS: `${ENV.API_URL}/bookings/slots`,
   },
   RECOMMENDATION: {
     CALCULATE: `${ENV.API_URL}/recommendation`,
