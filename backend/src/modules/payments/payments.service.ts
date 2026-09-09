@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import { Procurement } from '../../../../shared/types';
 import { notificationService } from '../notifications/notifications.service';
 
@@ -34,7 +33,7 @@ export async function generatePaymentForProcurement(procurement: Procurement): P
   const net = gross * 0.99;
 
   const payment: PaymentRecord = {
-    id: `pay-${uuidv4().substring(0, 8)}`,
+    id: `pay-${Math.random().toString(36).substring(7)}`,
     procurement_id: procurement.id,
     farmer_id: procurement.farmer_id,
     transaction_ref: `DBT-DEMO-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000)}`,

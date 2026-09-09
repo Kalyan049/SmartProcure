@@ -1,7 +1,16 @@
 import { useState, useEffect } from 'react';
 import { fetchApi } from '@/services/api/apiClient';
 import { API_ENDPOINTS } from '@/app/config/api.config';
-import { AppNotification } from '../../../../../backend/src/modules/notifications/notifications.service'; // For MVP types
+
+export interface AppNotification {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  type: 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR';
+  read: boolean;
+  created_at: string;
+}
 
 export function useNotifications() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);

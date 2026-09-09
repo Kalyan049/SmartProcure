@@ -1,5 +1,4 @@
 import { Procurement, ProcurementEvent, ProcurementStage } from '../../../../shared/types';
-import { v4 as uuidv4 } from 'uuid';
 
 export const PROCUREMENT_STAGES: ProcurementStage[] = [
   'BOOKED',
@@ -112,7 +111,7 @@ export async function advanceStage(
 
   // Create Event Log
   const event: ProcurementEvent = {
-    id: uuidv4(),
+    id: Math.random().toString(36).substring(7),
     procurement_id: procurementId,
     stage: nextStage,
     status: 'COMPLETED',

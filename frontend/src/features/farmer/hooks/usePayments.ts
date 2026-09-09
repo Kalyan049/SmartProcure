@@ -1,7 +1,23 @@
 import { useState, useEffect } from 'react';
 import { fetchApi } from '@/services/api/apiClient';
 import { API_ENDPOINTS } from '@/app/config/api.config';
-import { PaymentRecord } from '../../../../../backend/src/modules/payments/payments.service';
+
+export interface PaymentRecord {
+  id: string;
+  procurement_id: string;
+  farmer_id: string;
+  transaction_ref?: string;
+  crop: string;
+  grade: string;
+  quantity_quintals: number;
+  msp_rate_per_quintal: number;
+  gross_amount: number;
+  net_amount: number;
+  status: 'PENDING' | 'PROCESSING' | 'CREDITED' | 'FAILED';
+  is_demo: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 export function usePayments() {
   const [payments, setPayments] = useState<PaymentRecord[]>([]);

@@ -165,9 +165,14 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingC
       throw new Error('BOOKING_FAILED: Failed to create booking. Please try again.');
     }
     // Decrement slot availability in DB
-    await supabase.rpc('increment_slot_booked_count', { p_slot_id: slotId }).catch(() => {
-      // RPC may not exist yet; non-fatal for MVP
+    const { error: slotErr } = await supabase.rpc('increment_slot_booked_count', {
+      p_center_id: centerId,
+      p_date: date,
+      p_time_slot: slotId
     });
+    if (slotErr) {
+      logger.error('Failed to update slot count: ' + slotErr.message);
+    }
   } else {
     // Mock: update in-memory slot count
     slotBookedCounts[slotId] = getEffectiveBookedCount(slotId, slot.booked_count) + 1;

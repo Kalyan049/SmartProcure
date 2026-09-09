@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../../utils/logger';
 
 export interface AppNotification {
@@ -25,7 +24,7 @@ export class InAppNotificationProvider implements NotificationProvider {
   name = 'InApp';
   async send(userId: string, title: string, message: string, type: any): Promise<boolean> {
     const notif: AppNotification = {
-      id: uuidv4(),
+      id: Math.random().toString(36).substring(7),
       user_id: userId,
       title,
       message,

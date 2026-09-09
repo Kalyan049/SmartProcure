@@ -10,6 +10,7 @@ const env_1 = require("./config/env");
 const logger_middleware_1 = require("./middleware/logger.middleware");
 const error_middleware_1 = require("./middleware/error.middleware");
 const routes_1 = __importDefault(require("./routes"));
+const audit_middleware_1 = require("./middleware/audit.middleware");
 const createApp = () => {
     const app = (0, express_1.default)();
     // Basic Security & Middlewares
@@ -20,6 +21,7 @@ const createApp = () => {
     app.use(express_1.default.json());
     app.use(express_1.default.urlencoded({ extended: true }));
     app.use(logger_middleware_1.loggerMiddleware);
+    app.use(audit_middleware_1.auditMiddleware);
     // Mount API Root
     app.use('/api', routes_1.default);
     // Global Error Handler

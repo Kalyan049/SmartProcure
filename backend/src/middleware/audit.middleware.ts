@@ -20,13 +20,16 @@ export const auditMiddleware = (
     return next();
   }
 
-  res.on('finish', () => {
+  const start = Date.now();
+
+  res.on('finish', async () => {
     // Only log if the request was successful
     if (res.statusCode >= 400) {
       return;
     }
 
-    const actorId = req.user?.id || 'anonymous';
+    const duration = Date.now() - start;
+    const actorId = (req as any).user?.id || req.headers['x-farmer-id'] as string || 'system';
     const actorRole = req.user?.role || 'SYSTEM';
 
     // Best-effort extraction of entity ID from URL or body

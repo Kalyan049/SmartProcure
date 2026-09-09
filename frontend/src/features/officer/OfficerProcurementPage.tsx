@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { PageContainer, Card, Button, Input, Select } from '@/components';
-import { FileCheck, Scale, AlertTriangle, Loader2, ArrowRight } from 'lucide-react';
+import { FileCheck, Scale, AlertTriangle, Loader2, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useProcurementRealtime } from '../farmer/hooks/useProcurementRealtime';
-import { PROCUREMENT_STAGES } from '../../../../../backend/src/modules/procurement/procurement.service'; // We will hardcode the sequence for simplicity
 
 const STAGES = [
   'BOOKED',

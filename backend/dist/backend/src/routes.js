@@ -29,11 +29,14 @@ router.get('/health', (req, res) => {
         uptimeSeconds: Math.floor(process.uptime()),
     });
 });
+const auth_middleware_1 = require("./middleware/auth.middleware");
 // Modular Domain Route Mounts
 router.use('/auth', auth_routes_1.default);
-router.use('/farmers', farmers_routes_1.default);
 router.use('/centers', centers_routes_1.default);
 router.use('/slots', slots_routes_1.default);
+// Protect all subsequent domain routes
+router.use(auth_middleware_1.authenticate);
+router.use('/farmers', farmers_routes_1.default);
 router.use('/bookings', bookings_routes_1.default);
 router.use('/recommendation', recommendation_routes_1.default);
 router.use('/queue', queue_routes_1.default);
