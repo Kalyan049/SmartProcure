@@ -6,6 +6,8 @@ export const API_ENDPOINTS = {
     SEND_OTP: `${ENV.API_URL}/auth/send-otp`,
     VERIFY_OTP: `${ENV.API_URL}/auth/verify-otp`,
     ME: `${ENV.API_URL}/auth/me`,
+    REGISTER: `${ENV.API_URL}/auth/register`,
+    UPDATE_PROFILE: `${ENV.API_URL}/auth/profile`,
   },
   FARMERS: {
     PROFILE: `${ENV.API_URL}/farmers/me`,

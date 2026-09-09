@@ -3,6 +3,74 @@
 -- Source of Truth: docs/ARCHITECTURE.md Section 18 & docs/DESIGN_STYLE (1).md
 -- ==============================================================================
 
+-- ==============================================================================
+-- 0. Supabase Auth Users (run ONCE per project setup)
+-- Creates auth.users entries so Supabase login works.
+-- UUIDs match users table so auth.uid() = users.id for RLS.
+-- Emails follow convention: <mobile>@smartprocure.local
+-- IMPORTANT: Run this in the Supabase SQL editor AFTER enabling Email Auth
+--            and disabling email confirmation in Auth > Settings.
+-- ==============================================================================
+
+-- Farmer demo account: mobile 9876543210, password DemoFarmer@123
+INSERT INTO auth.users (
+  id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
+  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, confirmation_token
+) VALUES (
+  'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated', 'authenticated',
+  '9876543210@smartprocure.local',
+  crypt('DemoFarmer@123', gen_salt('bf')),
+  NOW(), NOW(), NOW(),
+  '{"provider":"email","providers":["email"]}',
+  '{"mobile":"9876543210","role":"FARMER","name":"Ramesh Kumar"}'::jsonb,
+  FALSE, ''
+) ON CONFLICT (id) DO UPDATE SET encrypted_password = EXCLUDED.encrypted_password, email = EXCLUDED.email;
+
+-- Officer demo account: mobile 9999999999, password DemoOfficer@123
+INSERT INTO auth.users (
+  id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
+  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, confirmation_token
+) VALUES (
+  'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated', 'authenticated',
+  '9999999999@smartprocure.local',
+  crypt('DemoOfficer@123', gen_salt('bf')),
+  NOW(), NOW(), NOW(),
+  '{"provider":"email","providers":["email"]}',
+  '{"mobile":"9999999999","role":"OFFICER","name":"Procurement Officer Rawat"}'::jsonb,
+  FALSE, ''
+) ON CONFLICT (id) DO UPDATE SET encrypted_password = EXCLUDED.encrypted_password, email = EXCLUDED.email;
+
+-- Admin demo account: mobile 8888888888, password DemoAdmin@123
+INSERT INTO auth.users (
+  id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
+  created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, confirmation_token
+) VALUES (
+  'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated', 'authenticated',
+  '8888888888@smartprocure.local',
+  crypt('DemoAdmin@123', gen_salt('bf')),
+  NOW(), NOW(), NOW(),
+  '{"provider":"email","providers":["email"]}',
+  '{"mobile":"8888888888","role":"ADMIN","name":"System Administrator"}'::jsonb,
+  FALSE, ''
+) ON CONFLICT (id) DO UPDATE SET encrypted_password = EXCLUDED.encrypted_password, email = EXCLUDED.email;
+
+-- Create matching identity records (required for email provider)
+INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+VALUES
+  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', '9876543210@smartprocure.local',
+   '{"sub":"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11","email":"9876543210@smartprocure.local"}'::jsonb, 'email', NOW(), NOW(), NOW()),
+  ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', '9999999999@smartprocure.local',
+   '{"sub":"b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22","email":"9999999999@smartprocure.local"}'::jsonb, 'email', NOW(), NOW(), NOW()),
+  ('c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', '8888888888@smartprocure.local',
+   '{"sub":"c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33","email":"8888888888@smartprocure.local"}'::jsonb, 'email', NOW(), NOW(), NOW())
+ON CONFLICT (provider, provider_id) DO NOTHING;
+
 -- 1. Demo Users
 INSERT INTO users (id, name, mobile, role, language) VALUES
 ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Ramesh Kumar', '9876543210', 'FARMER', 'en'),

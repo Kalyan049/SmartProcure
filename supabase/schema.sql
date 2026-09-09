@@ -313,15 +313,22 @@ ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE voice_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE voice_outbound_triggers ENABLE ROW LEVEL SECURITY;
 
+-- NOTE: users.id MUST equal the Supabase auth.uid() for RLS to resolve correctly.
+-- When creating auth.users via seed, use the same UUIDs as the users table entries.
+
 -- 1. users: users can read/update their own record; officers/admins can read all users
 CREATE POLICY users_select_policy ON users
     FOR SELECT USING (auth.uid() = id OR EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('OFFICER', 'ADMIN')));
+CREATE POLICY users_insert_policy ON users
+    FOR INSERT WITH CHECK (auth.uid() = id);
 CREATE POLICY users_update_policy ON users
     FOR UPDATE USING (auth.uid() = id);
 
--- 2. farmer_profiles: farmers view/update own; officers can view
+-- 2. farmer_profiles: farmers view/update own; officers can view; farmers can insert own
 CREATE POLICY farmer_profiles_select_policy ON farmer_profiles
     FOR SELECT USING (user_id = auth.uid() OR EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('OFFICER', 'ADMIN')));
+CREATE POLICY farmer_profiles_insert_policy ON farmer_profiles
+    FOR INSERT WITH CHECK (user_id = auth.uid());
 CREATE POLICY farmer_profiles_update_policy ON farmer_profiles
     FOR UPDATE USING (user_id = auth.uid());
 

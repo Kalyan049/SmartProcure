@@ -1,5 +1,7 @@
 import { ApiResponse } from '@shared/types';
 
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+
 export class ApiError extends Error {
   statusCode: number;
   code?: string;
@@ -19,9 +21,17 @@ export async function fetchApi<T>(
     'Content-Type': 'application/json',
   };
 
-  const token = localStorage.getItem('smartprocure_token');
-  if (token) {
-    defaultHeaders['Authorization'] = `Bearer ${token}`;
+  if (isSupabaseConfigured) {
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.access_token) {
+      defaultHeaders['Authorization'] = `Bearer ${data.session.access_token}`;
+    }
+  }
+
+  // Fallback for mock testing
+  const mockUserId = localStorage.getItem('smartprocure_mock_user_id');
+  if (mockUserId) {
+    defaultHeaders['x-mock-user-id'] = mockUserId;
   }
 
   const role = localStorage.getItem('smartprocure_role') || 'FARMER';

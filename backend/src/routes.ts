@@ -27,11 +27,17 @@ router.get('/health', (req, res) => {
   });
 });
 
+import { authenticate } from './middleware/auth.middleware';
+
 // Modular Domain Route Mounts
 router.use('/auth', authRoutes);
-router.use('/farmers', farmersRoutes);
 router.use('/centers', centersRoutes);
 router.use('/slots', slotsRoutes);
+
+// Protect all subsequent domain routes
+router.use(authenticate);
+
+router.use('/farmers', farmersRoutes);
 router.use('/bookings', bookingsRoutes);
 router.use('/recommendation', recommendationRoutes);
 router.use('/queue', queueRoutes);

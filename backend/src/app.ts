@@ -5,6 +5,8 @@ import { loggerMiddleware } from './middleware/logger.middleware';
 import { errorHandler } from './middleware/error.middleware';
 import apiRoutes from './routes';
 
+import { auditMiddleware } from './middleware/audit.middleware';
+
 export const createApp = (): Express => {
   const app = express();
 
@@ -18,6 +20,7 @@ export const createApp = (): Express => {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use(loggerMiddleware);
+  app.use(auditMiddleware);
 
   // Mount API Root
   app.use('/api', apiRoutes);

@@ -8,10 +8,12 @@ import {
   Menu,
   X,
   Compass,
+  LogOut,
 } from 'lucide-react';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { LanguageCode, UserRole } from '@shared/types';
 import { useNavigate, useLocation, NavLink } from 'react-router-dom';
+import { ProfileEditModal } from '../ui/ProfileEditModal';
 
 export interface AppHeaderProps {
   onToggleMobileMenu?: () => void;
@@ -22,10 +24,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onToggleMobileMenu,
   showMobileMenuButton = false,
 }) => {
-  const { user, role, language, setLanguage, loginAs } = useAuth();
+  const { user, role, language, setLanguage, loginAs, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const handleRoleToggle = () => {
     const nextRole: UserRole = role === 'FARMER' ? 'OFFICER' : 'FARMER';
@@ -133,29 +137,66 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-semantic-error ring-2 ring-white" />
             </button>
 
-            {/* User Profile Chip */}
-            <div
-              onClick={() =>
-                navigate(role === 'OFFICER' ? '/officer/dashboard' : '/farmer/profile')
-              }
-              className="flex items-center gap-2 pl-1 cursor-pointer select-none"
-              role="button"
-              tabIndex={0}
-              aria-label="User Profile"
-            >
-              <div className="w-8 h-8 rounded-full bg-brand-tint border border-brand-mint flex items-center justify-center text-brand-primary font-bold text-xs shrink-0">
-                {user?.name ? user.name.charAt(0) : <UserIcon className="w-4 h-4" />}
+            {/* User Profile Dropdown */}
+            <div className="relative">
+              <div
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center gap-2 pl-1 cursor-pointer select-none"
+                role="button"
+                tabIndex={0}
+                aria-label="User Menu"
+              >
+                <div className="w-8 h-8 rounded-full bg-brand-tint border border-brand-mint flex items-center justify-center text-brand-primary font-bold text-xs shrink-0">
+                  {user?.name ? user.name.charAt(0) : <UserIcon className="w-4 h-4" />}
+                </div>
+                <div className="hidden xl:block text-left">
+                  <p className="text-xs font-bold text-text-primary leading-tight truncate max-w-[110px]">
+                    {user?.name}
+                  </p>
+                  <p className="text-[10px] text-text-muted">{user?.mobile}</p>
+                </div>
               </div>
-              <div className="hidden xl:block text-left">
-                <p className="text-xs font-bold text-text-primary leading-tight truncate max-w-[110px]">
-                  {user?.name}
-                </p>
-                <p className="text-[10px] text-text-muted">{user?.mobile}</p>
-              </div>
+
+              {/* Dropdown Menu */}
+              {isUserMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-surface-border overflow-hidden z-50 animate-in slide-in-from-top-2 duration-150">
+                  <div className="px-4 py-3 border-b border-surface-border bg-surface-page xl:hidden">
+                    <p className="text-sm font-bold text-text-primary truncate">{user?.name}</p>
+                    <p className="text-xs text-text-secondary truncate">{user?.mobile}</p>
+                  </div>
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        setIsProfileModalOpen(true);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-surface-page transition-colors flex items-center gap-2"
+                    >
+                      <UserIcon className="w-4 h-4 text-text-secondary" />
+                      Edit Profile
+                    </button>
+                    <button
+                      onClick={async () => {
+                        setIsUserMenuOpen(false);
+                        await logout();
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-status-error hover:bg-status-error/10 transition-colors flex items-center gap-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </header>
+
+      <ProfileEditModal 
+        isOpen={isProfileModalOpen} 
+        onClose={() => setIsProfileModalOpen(false)} 
+      />
     </>
   );
 };
