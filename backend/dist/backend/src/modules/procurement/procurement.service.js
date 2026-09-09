@@ -32,9 +32,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PROCUREMENT_STAGES = void 0;
 exports.getProcurement = getProcurement;
@@ -42,7 +39,6 @@ exports.getMyProcurement = getMyProcurement;
 exports.getEvents = getEvents;
 exports.advanceStage = advanceStage;
 exports.resetDemoState = resetDemoState;
-const crypto_1 = __importDefault(require("crypto"));
 exports.PROCUREMENT_STAGES = [
     'BOOKED',
     'ARRIVED',
@@ -144,7 +140,7 @@ async function advanceStage(procurementId, actorId, actorName, payload) {
     proc.updated_at = new Date().toISOString();
     // Create Event Log
     const event = {
-        id: crypto_1.default.randomUUID(),
+        id: Math.random().toString(36).substring(7),
         procurement_id: procurementId,
         stage: nextStage,
         status: 'COMPLETED',

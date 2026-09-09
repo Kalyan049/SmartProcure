@@ -169,7 +169,10 @@ async function createBooking(input) {
         updated_at: new Date().toISOString(),
     };
     if ((0, supabase_1.isDatabaseConfigured)() && supabase_1.supabase) {
-        await supabase_1.supabase.from('queue_entries').insert(queueEntry).catch(err => logger_1.logger.warn('[Bookings] Queue entry insert failed (non-fatal):', err));
+        const { error: insertErr } = await supabase_1.supabase.from('queue_entries').insert(queueEntry);
+        if (insertErr) {
+            logger_1.logger.warn('[Bookings] Queue entry insert failed (non-fatal):', insertErr);
+        }
     }
     else {
         exports.DEMO_QUEUE.push(queueEntry);

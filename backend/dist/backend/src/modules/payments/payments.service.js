@@ -1,13 +1,9 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DEMO_PAYMENTS = void 0;
 exports.generatePaymentForProcurement = generatePaymentForProcurement;
 exports.getMyPayments = getMyPayments;
 const notifications_service_1 = require("../notifications/notifications.service");
-const crypto_1 = __importDefault(require("crypto"));
 exports.DEMO_PAYMENTS = [];
 async function generatePaymentForProcurement(procurement) {
     // Check if payment already exists
@@ -20,7 +16,7 @@ async function generatePaymentForProcurement(procurement) {
     // Simulated deductions (e.g. 1% handling, MVP mockup)
     const net = gross * 0.99;
     const payment = {
-        id: `pay-${crypto_1.default.randomUUID().substring(0, 8)}`,
+        id: `pay-${Math.random().toString(36).substring(7)}`,
         procurement_id: procurement.id,
         farmer_id: procurement.farmer_id,
         transaction_ref: `DBT-DEMO-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000)}`,

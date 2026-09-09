@@ -1,11 +1,7 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.notificationService = exports.NotificationService = exports.MockSmsProvider = exports.InAppNotificationProvider = exports.DEMO_NOTIFICATIONS = void 0;
 const logger_1 = require("../../utils/logger");
-const crypto_1 = __importDefault(require("crypto"));
 // Global mock state
 exports.DEMO_NOTIFICATIONS = [];
 // ── Adapters ──
@@ -13,7 +9,7 @@ class InAppNotificationProvider {
     name = 'InApp';
     async send(userId, title, message, type) {
         const notif = {
-            id: crypto_1.default.randomUUID(),
+            id: Math.random().toString(36).substring(7),
             user_id: userId,
             title,
             message,

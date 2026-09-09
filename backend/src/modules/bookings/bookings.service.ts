@@ -199,9 +199,10 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingC
   };
 
   if (isDatabaseConfigured() && supabase) {
-    await supabase.from('queue_entries').insert(queueEntry).catch(err =>
-      logger.warn('[Bookings] Queue entry insert failed (non-fatal):', err)
-    );
+    const { error: insertErr } = await supabase.from('queue_entries').insert(queueEntry);
+    if (insertErr) {
+      logger.warn('[Bookings] Queue entry insert failed (non-fatal):', insertErr);
+    }
   } else {
     DEMO_QUEUE.push(queueEntry);
   }
